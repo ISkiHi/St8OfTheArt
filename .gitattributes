@@ -1,9 +1,1 @@
-.*.mp4 filter=lfs diff=lfs merge=lfs -text
-.*.mov filter=lfs diff=lfs merge=lfs -text
-10MTL[[:space:]]Showcase.mp4 filter=lfs diff=lfs merge=lfs -text
-Bleunami[[:space:]]Showcase.mp4 filter=lfs diff=lfs merge=lfs -text
-Bluenami[[:space:]]Showcase.mp4 filter=lfs diff=lfs merge=lfs -text
-BR[[:space:]]Showcase.mp4 filter=lfs diff=lfs merge=lfs -text
-Melancholia[[:space:]]Showcase.mp4 filter=lfs diff=lfs merge=lfs -text
-TCGRW[[:space:]]Showcase.mp4 filter=lfs diff=lfs merge=lfs -text
 Showreel.mp4 filter=lfs diff=lfs merge=lfs -text
