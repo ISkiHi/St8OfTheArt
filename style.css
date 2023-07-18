@@ -61,10 +61,10 @@ a:hover {
   color: blue;
 }
 
-video {
+video, iframe {
   display: block;
   margin: 0 auto;
-  padding-bottom: 25px;
+  padding-bottom: 5px;
 }
 
 img {
