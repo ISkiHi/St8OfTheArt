@@ -58,7 +58,7 @@ a {
 }
 
 a:hover {
-  color: blue;
+  color: yellow;
 }
 
 video, iframe {
@@ -78,4 +78,15 @@ img {
 table {
     margin-left: auto;
     margin-right: auto;
+}
+
+#certificate {
+    margin-left: auto;
+    margin-right: auto;
+    height: 480px;
+    width: 720px;
+}
+
+#contact {
+    font-size: 25px;
 }
