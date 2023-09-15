@@ -1,3 +1,9 @@
+* {
+    line-height: 1.5;
+    letter-spacing: 0.05em;
+    font-family: Arial;
+}
+
 main {
   background: url("images/background.jpg") no-repeat center center fixed;
   background-size: cover;
@@ -8,12 +14,12 @@ body {
 }
 
 h1 {
-  font-size: 46px;
+  font-size: 28px;
   color: white;
 }
 
 h2 {
-  font-size: 42px;
+  font-size: 26px;
 }
 
 h2.firstMainHeader.lastHeader {
@@ -21,17 +27,16 @@ h2.firstMainHeader.lastHeader {
 }
 
 h3 {
-  font-size: 38px;
+  font-size: 24px;
 }
 
 h4 {
-  font-size: 34px;
+  font-size: 22px;
   color: white;
 }
 
 h1, h2, h3, h4 {
   text-align: center;
-  font-family: Sans-Serif;
   font-weight: bold;
 }
 
@@ -40,9 +45,8 @@ h2, h3 {
 }
 
 p {
-  font-size: 1.5vw;
+  font-size: 20px;
   text-align: center;
-  font-family: Serif;
   color: white;
   padding-left: 50px;
   padding-right: 50px;
@@ -50,15 +54,17 @@ p {
 
 a {
   display: block;
-  font-size: 26px;
-  text-align: center;
-  font-family: Serif;
-  color: white;
+  color: lightblue;
   transition: color 0.5s ease;
 }
 
+p, a {
+    font-size: 20px;
+    text-align: center;
+}
+
 a:hover {
-  color: yellow;
+  color: blue;
 }
 
 video, iframe {
@@ -80,14 +86,13 @@ table {
     margin-right: auto;
 }
 
+footer {
+    text-align:center;
+}
+
 #certificate {
     margin-left: auto;
     margin-right: auto;
     height: 480px;
     width: 720px;
-}
-
-#contact, #PS {
-    font-size: 26px;
-    color: yellow;
 }
