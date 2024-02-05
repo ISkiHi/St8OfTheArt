@@ -66,12 +66,45 @@ a:hover {
   color: blue;
 }
 
-video, iframe {
+video, iframe.youtube {
   display: block;
   margin: 0 auto;
   width: 720px;
   height: 480px;
   padding-bottom: 5px;
+}
+
+iframe {
+    display: block;
+    margin: 0 auto;
+    padding-bottom: 5px;
+}
+
+img.trello2 {
+    display: block;
+    margin: 0 auto;
+    height: 450px;
+    width: 500px;
+}
+
+img.trello4 {
+    display: block;
+    margin: 0 auto;
+    height: 400px;
+    width: 500px;
+}
+
+img.matildaImage {
+    display: block;
+    margin: 0 auto;
+    height: 300px;
+    width: 500px;
+}
+
+img.fireworkImage {
+    display: block;
+    height: 500px;
+    width: 350px;
 }
 
 img {
