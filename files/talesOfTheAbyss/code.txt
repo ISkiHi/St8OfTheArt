@@ -1,0 +1,1423 @@
+ANGULAR FISH
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class AngularFish : MonoBehaviour
+{
+    private bool resting = false;
+    
+    private float delayTime = 2f;
+    private float speed = 1f;
+
+    private int currentWaypoint;
+
+    [Header("Waypoints")]
+    [SerializeField] private Transform waypoint_0;
+    [SerializeField] private Transform waypoint_1;
+    [SerializeField] private bool flipped;
+
+    [Header("Sprite")]
+    [SerializeField] private SpriteRenderer sprite;
+
+    void Awake()
+    {
+        if (flipped)
+        {
+            currentWaypoint = 1;
+        }
+        else
+        {
+            currentWaypoint = 0;
+        }
+    }
+    
+    void Update()
+    {
+        if (currentWaypoint == 0)
+        {
+            if (!resting)
+            {
+                sprite.flipX = false;
+                transform.position = Vector3.MoveTowards(transform.position, waypoint_0.position, speed * Time.deltaTime);
+
+                if (Vector3.Distance(transform.position, waypoint_0.position) < 0.001f)
+                {
+                    currentWaypoint = 1;
+                    StartCoroutine(Rest());
+                }
+            }
+        }
+        
+        else
+        {
+            if (!resting)
+            {
+                sprite.flipX = true;
+                transform.position = Vector3.MoveTowards(transform.position, waypoint_1.position, speed * Time.deltaTime);
+
+                if (Vector3.Distance(transform.position, waypoint_1.position) < 0.001f)
+                {
+                    currentWaypoint = 0;
+                    StartCoroutine(Rest());
+                }
+            }
+        }
+    }
+    
+    IEnumerator Rest()
+    {
+        resting = true;
+        yield return new WaitForSeconds(delayTime);
+        resting = false;
+    }
+}
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BREAK WALL
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class BreakWall : MonoBehaviour
+{
+    [Header("SFX")]
+    [SerializeField] private AudioSource wallBreaking;
+
+    private Animator wallAnim;
+
+    private void Awake()
+    {
+        wallAnim = GetComponent<Animator>();
+    }
+    
+    IEnumerator OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.name == ("Mermaid"))
+        {
+            wallAnim.SetBool("wallCollision", true);
+            wallBreaking.Play();
+            yield return new WaitForSeconds(2f);
+            Destroy(gameObject);
+        }
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+DO NOT DESTROY
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class DoNotDestroy : MonoBehaviour
+{
+    public bool introSeen = false;
+    
+    private void Awake()
+    {
+        GameObject[] musicObj = GameObject.FindGameObjectsWithTag("Music");
+
+        if (musicObj.Length > 1)
+        {
+            Destroy(this.gameObject);
+        }
+
+        DontDestroyOnLoad(this.gameObject);
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+FISH MOVEMENT
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class FishMovement : MonoBehaviour
+{
+    [SerializeField] private bool flipped;
+    
+    private Rigidbody2D rb;
+    private SpriteRenderer spriteRenderer;
+
+    private float speed = 3f;
+    
+    // Start is called before the first frame update
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (!flipped)
+        {
+            rb.velocity = -transform.right * speed;
+        }
+        else
+        {
+            rb.velocity = transform.right * speed;
+        }
+
+        if (!spriteRenderer.isVisible)
+        {
+            Destroy(gameObject);
+        }
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+FISH SPAWNER
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class FishSpawner : MonoBehaviour
+{
+    [SerializeField] List<GameObject> fishList;
+
+    private int fishRandom;
+    private float randomDelay;
+    private bool onScreen;
+
+    private new SpriteRenderer renderer;
+    
+    // Start is called before the first frame update
+    void Start()
+    {
+        renderer = GetComponent<SpriteRenderer>();
+        
+        if (onScreen)
+        {
+            StartCoroutine(SpawnFish());
+        }
+    }
+
+    void Update()
+    {
+        if (renderer.isVisible)
+        {
+            if (!onScreen)
+            {
+                StartCoroutine(SpawnFish());
+            }
+
+            onScreen = true;
+        }
+
+        else
+        {
+            onScreen = false;
+        }
+    }
+
+    IEnumerator SpawnFish()
+    {
+        fishRandom = Random.Range(0, fishList.Count - 1);
+        randomDelay = Random.Range(1f, 3f);
+        yield return new WaitForSeconds(randomDelay);
+        Instantiate(fishList[fishRandom], transform.position, Quaternion.identity);
+        
+        if (onScreen)
+        { 
+            StartCoroutine(SpawnFish());
+        }
+        else
+        {
+            yield break;
+        }
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+INTRO
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class Intro : MonoBehaviour
+{ 
+    // Start is called before the first frame update
+    void Start()
+    {
+        StartCoroutine(LevelProcess());
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown("return"))
+        {
+            SceneManager.LoadScene(2);
+        }
+    }
+
+    IEnumerator LevelProcess()
+    {
+        Debug.Log("Level Process Called");
+        yield return new WaitForSeconds(50f);
+        SceneManager.LoadScene(2);
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+JELLYFISH
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Jellyfish : MonoBehaviour
+{
+    [Header("Waypoints")]
+    [SerializeField] private Transform waypoint_0;
+    [SerializeField] private Transform waypoint_1;
+
+    [Header("Variables")]
+    [SerializeField] private bool flipped;
+
+    private int currentWaypoint = 0;
+
+    private float downSpeed = 1.5f;
+    private float upSpeed;
+
+    void Start()
+    {
+        upSpeed = downSpeed * 2f;
+        
+        if (flipped)
+        {
+            currentWaypoint = 1;
+        }
+        else
+        {
+            currentWaypoint = 0;
+        }
+    }
+    
+    void Update()
+    {
+        if (currentWaypoint == 0)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, waypoint_0.position, downSpeed * Time.deltaTime);
+
+            if (Vector3.Distance(transform.position, waypoint_0. position) < 0.001f)
+            {
+                currentWaypoint = 1;
+            }
+        }
+        else
+        {
+            transform.position = Vector3.MoveTowards(transform.position, waypoint_1.position, upSpeed * Time.deltaTime);
+
+            if (Vector3.Distance(transform.position, waypoint_1.position) < 0.001f)
+            {
+                currentWaypoint = 0;
+            }
+        }
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+JOURNAL
+
+using System.Collections;
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class Journal : MonoBehaviour
+{
+    [Header("Public Object References")]
+    [SerializeField] private GameObject journal;
+    [SerializeField] private GameObject leftButton;
+    [SerializeField] private GameObject rightButton;
+    [SerializeField] private GameObject recyclingImage;
+    [SerializeField] private GameObject ussJohnstonImage;
+    [SerializeField] private GameObject volcanoImage;
+    [SerializeField] private GameObject snailfishImage;
+    [SerializeField] private GameObject anglerFishImage;
+    [SerializeField] private GameObject jellyfishImage;
+    [SerializeField] private TMP_Text title;
+    [SerializeField] private TMP_Text details;
+
+    [Header("States")]
+    [SerializeField] private int maxState;
+    public int state;
+    public bool[] unlockable;
+
+    [Header("SFX")]
+    [SerializeField] private AudioSource openSFX;
+    [SerializeField] private AudioSource closeSFX;
+
+    private int latestState;
+    
+    private void Update()
+    {
+        if (journal.activeSelf)
+        {
+            if (Input.GetKeyDown("left") || Input.GetKeyDown("a"))
+            {
+                if (state != 0)
+                {
+                    LeftButtonPressed();
+                }
+            }
+
+            if (Input.GetKeyDown("right") || Input.GetKeyDown("d"))
+            {
+                if (state != maxState)
+                {
+                    if (unlockable[state] == true)
+                    {
+                        RightButtonPressed();
+                    }
+                }
+            }
+        }
+    }
+    
+    public void JournalActivation()
+    {
+        if (journal.activeSelf)
+        {
+            closeSFX.Play();
+            journal.SetActive(false);
+            Time.timeScale = 1f;
+            state = latestState;
+
+            recyclingImage.SetActive(false);
+            volcanoImage.SetActive(false);
+            snailfishImage.SetActive(false);
+            anglerFishImage.SetActive(false);
+            jellyfishImage.SetActive(false);
+            ussJohnstonImage.SetActive(false);
+            leftButton.SetActive(false);
+            rightButton.SetActive(false);
+        }
+
+        else
+        {
+            openSFX.Play();
+            journal.SetActive(true);
+            Time.timeScale = 0f;
+            latestState = state;
+
+            StateCheck();
+        }
+    }
+
+    private void StateCheck()
+    {
+        switch (state)
+        {
+            case 0:
+                Recycling();
+                break;
+            case 1:
+                Volcanoes();
+                break;
+            case 2:
+                Snailfish();
+                break;
+            case 3:
+                AnglerFish();
+                break;
+            case 4:
+                Jellyfish();
+                break;
+            case 5:
+                USSJohnston();
+                break;
+        }
+    }
+
+    public void LeftButtonPressed()
+    {
+        openSFX.Play();
+        state--;
+        
+        if (!rightButton.activeSelf)
+        {
+            rightButton.SetActive(true);
+        }
+
+        if (state == 0)
+        {
+            leftButton.SetActive(false);
+        }
+
+        StateCheck();
+    }
+
+    public void RightButtonPressed()
+    {
+        openSFX.Play();
+        state++;
+
+        if (!leftButton.activeSelf)
+        {
+            leftButton.SetActive(true);
+        }
+        
+        if (state == maxState || unlockable[state] == false)
+        {
+            rightButton.SetActive(false);
+        }
+
+        StateCheck();
+    }
+    
+    private void Recycling()
+    {
+        if (volcanoImage == true)
+        {
+            volcanoImage.SetActive(false);
+        }
+
+        if (unlockable[state] == true)
+        {
+            rightButton.SetActive(true);
+        }
+
+        leftButton.SetActive(false);
+
+        recyclingImage.SetActive(true);
+        title.text = ("Ocean Recycling");
+        details.text = ("It is estimated that there are over countless trillions of microplastics within the earths wonderful oceans. " +
+            "These microplastics are ingested by our marine life causing them harm. But what can be done? Cutting down " +
+            "on the plastic items that we buy each day is a great way to start. However, this proves difficult as we know plenty of " +
+            "our favourite snacks and treats are packaged in plastic materials. Despite this, we must start somewhere to make " +
+            "our ocean a cleaner and safer place, not only for marine life, but also for ourselves. Actions such as bringing " +
+            "our own bag with us to go shopping, instead of opting for store plastic bags, and using paper straws instead " +
+            "of plastic straws are minor changes that can make a major difference.");
+    }
+    
+    private void Volcanoes()
+    {
+        if (recyclingImage.activeSelf == true)
+        {
+            recyclingImage.SetActive(false);
+        }
+        
+        else if (snailfishImage.activeSelf == true)
+        {
+            snailfishImage.SetActive(false);
+        }
+
+        if (unlockable[state] == true)
+        {
+            rightButton.SetActive(true);
+        }
+
+        leftButton.SetActive(true);
+
+        volcanoImage.SetActive(true);
+        title.text = ("Underwater Volcano");
+        details.text = ("Underwater volcanos are formed along subduction zones, and ocean ridges. They release heat, ash, molten rock, " +
+            "lava and vapour periodically. Also, some generate planetary crust whilst others act as a conduit for trace elements and " +
+            "other materials. Underwater volcanoes take on many forms such as shield volcanoes, and chimney - like conduits!");
+    }
+
+    private void Snailfish()
+    {
+        if (volcanoImage.activeSelf == true)
+        {
+            volcanoImage.SetActive(false);
+        }
+        else if (anglerFishImage.activeSelf == true)
+        {
+            anglerFishImage.SetActive(false);
+        }
+
+        if (unlockable[state] == true)
+        {
+            rightButton.SetActive(true);
+        }
+
+        leftButton.SetActive(true);
+
+        snailfishImage.SetActive(true);
+        title.text = ("Psuedoliparis Swirei (Mariana Snailfish)");
+        details.text = ("Psuedoliparis Swirei or also known as the Mariana Snailfish have a maximum length of 22.6cm. Most commonly found between " +
+            "7,000 - 8,000 metres below the ocean and have no pleural ribs! Females are known to have had eggs up to 9.4mm in diameter, which is " +
+            "almost ¾ of their size!");
+    }
+
+    private void AnglerFish()
+    {
+        if (snailfishImage.activeSelf == true)
+        {
+            snailfishImage.SetActive(false);
+        }
+        else if (jellyfishImage.activeSelf == true)
+        {
+            jellyfishImage.SetActive(false);
+        }
+
+        if (unlockable[state] == true)
+        {
+            rightButton.SetActive(true);
+        }
+
+        leftButton.SetActive(true);
+
+        anglerFishImage.SetActive(true);
+        title.text = ("Melanocetus Johnsonii (Black Seadevil Anglerfish)");
+        details.text = ("Melanocetus Johnsonii are Female anglerfish. The Johnsonii attracts prey with her pole light, " +
+            "often known as the 'fishing pole'. The Johnsonii has a maximum size of eight inches, they are crustaceans, and are found in depths " +
+            "between 100 - 4,500 metres.");
+    }
+
+    private void Jellyfish()
+    {
+        if (anglerFishImage.activeSelf == true)
+        {
+            anglerFishImage.SetActive(false);
+        }
+        else if (ussJohnstonImage.activeSelf == true)
+        {
+            ussJohnstonImage.SetActive(false);
+        }
+
+        leftButton.SetActive(true);
+
+        jellyfishImage.SetActive(true);
+        title.text = ("Atolla Jellyfish (Crown Jelly)");
+        details.text = ("The Atolla Jellyfish or better known as the Crown Jelly was discovered in the 1880s. The Atolla is 1 - 8 inches in diameter and 12 " +
+            "feet in length (with tentacles). The Atolla has a deep groove running through their bell and has a non-complicated digestive system. " +
+            "The Atolla will trap all prey possible, usually small crustaceans. Furthermore, the Atolla appears black to predators letting them hide in " +
+            "plain sight! They can be found 1,000 - 4,000 metres in depth.");
+    }
+
+    private void USSJohnston()
+    {
+        if (jellyfishImage.activeSelf == true)
+        {
+            volcanoImage.SetActive(false);
+        }
+
+        leftButton.SetActive(true);
+        rightButton.SetActive(false);
+
+        ussJohnstonImage.SetActive(true);
+        title.text = ("USS Johnston (DD-557)");
+        details.text = ("During World War II in Seattle, Washington, a Fletcher class destroyer was commissioned that became lost at sea in 1944. " +
+            "Surrendered to nature and now becoming a home to many marine life. Not until 2021 was the ship rediscovered!");
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+LEVEL SETUP
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class LevelSetup : MonoBehaviour
+{   
+    [Header("Level Conditions")]
+    public bool boundaries = false;
+    public bool firstLevel = false;
+    public bool finalLevel = false;
+
+    [Header("Level Camera Boundaries")]
+    public float upLimit;
+    public float leftLimit;
+    public float downLimit;
+    public float rightLimit;
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+MENU FEEDBACK
+
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class MenuFeedback : MonoBehaviour
+{
+    private TMP_InputField nameInput;
+    private TMP_InputField feedbackInput;
+
+    [SerializeField] private GameObject nameOBJ;
+    [SerializeField] private GameObject feedbackOBJ;
+
+    // Start is called before the first frame update
+    void Awake()
+    {
+        nameInput = nameOBJ.GetComponent<TMP_InputField>();
+        feedbackInput = feedbackOBJ.GetComponent<TMP_InputField>();
+    }
+
+    public void SendFeedback()
+    {
+        string path = Application.dataPath + "/feedback.txt";
+        string name;
+        string feedback;
+
+        if (!File.Exists(path))
+        {
+            File.WriteAllText(path, "feedback");
+        }
+
+        if (nameInput.text == "") 
+        {
+            name = "(Unspecified)";
+        }
+        else
+        {
+            name = nameInput.text;
+        }
+
+        feedback = feedbackInput.text;
+        
+        if (feedback != "")
+        {
+            File.AppendAllText("feedback.txt",
+                    "\n\n" + name + "\n" + feedback);
+        }
+
+        nameInput.text = "";
+        feedbackInput.text = "";
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+MERMAID
+
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+
+public class Mermaid : MonoBehaviour
+{
+    // SCRIPTS
+    private LevelSetup levelSetup;
+    private Journal journal;
+    //private PauseMenu pause;
+
+    // OBJECT/COMPONENT REFERENCES
+    [Header("Object References")]
+    [SerializeField] private Animator fadeAnim;
+    [SerializeField] private Animator infoLogoAnim;
+    [SerializeField] private GameObject illuminateText;
+    [SerializeField] private GameObject introText;
+    [SerializeField] private GameObject spiritText;
+    [SerializeField] private GameObject journalText;
+    [SerializeField] private GameObject checkpointText;
+    [SerializeField] private Transform introSpirit;
+    [SerializeField] private Image infoLogo;
+    [SerializeField] private GameObject TBC;
+
+    [Header("SFX")]
+    [SerializeField] private AudioSource scribble;
+    [SerializeField] private AudioSource pickupSFX;
+    [SerializeField] private AudioSource illuminateSFX;
+    [SerializeField] private AudioSource splashSFX;
+
+    [Header("Testing")]
+    [SerializeField] private Transform testSpawn;
+
+    private GameObject manager;
+    private new GameObject camera;
+    private GameObject spiritUI;
+    private GameObject bubbles;
+    private Animator mermaidAnim;
+
+    private Light spotLight;
+
+    private LineRenderer lineRenderer;
+
+    private Rigidbody rb;
+
+    private new SpriteRenderer renderer;
+
+    private Transform spawnLocation;
+    private Transform topBound, leftBound, bottomBound, rightBound;
+    private Transform endLevel;
+
+    // VARIABLES
+    private bool endTriggered = false;
+    public bool intro = false;
+    private bool illuminateCooldown = false;
+    private bool spiritFound = false;
+    private bool journalHelpDone = false;
+    private bool respawning = false;
+
+    private bool downReached;
+    private bool leftReached;
+    private bool rightReached;
+    private bool upReached;
+
+    private float dirX;
+    private float dirY;
+
+    private float illuminateDelay = 5f;
+    private float maxLightIntensity = 3f;
+    private float maxLightRange = 15f;
+    private float normalLightIntensity = 3f;
+    private float normalLightRange = 4f;
+
+    private float speed = 3.5f;
+    private float resistance;
+
+    private string direction;
+
+    // Start is called before the first frame update
+    void Awake()
+    {
+        manager = GameObject.Find("Manager");
+        
+        levelSetup = manager.GetComponent<LevelSetup>();
+        journal = manager.GetComponent<Journal>();
+        
+        camera = GameObject.Find("Main Camera");
+
+        mermaidAnim = GetComponent<Animator>();
+        
+        if (levelSetup.boundaries == true)
+        {
+            topBound = GameObject.Find("Top Bound").transform;
+            leftBound = GameObject.Find("Left Bound").transform;
+            bottomBound = GameObject.Find("Bottom Bound").transform;
+            rightBound = GameObject.Find("Right Bound").transform;
+        }
+
+        if (levelSetup.firstLevel == true)
+        {
+            intro = true;
+        }
+
+        spiritUI = GameObject.Find("Spirit Image");
+        spiritUI.SetActive(false);
+
+        rb = GetComponent<Rigidbody>();
+        renderer = GetComponent<SpriteRenderer>();
+        bubbles = GameObject.Find("Player Bubbles");
+        lineRenderer = GetComponent<LineRenderer>();
+        spawnLocation = GameObject.Find("Spawn").transform;
+        spotLight = GameObject.Find("Player Light").GetComponent<Light>();
+
+        endLevel = GameObject.Find("End Level").transform;
+    }
+
+    void Start()
+    {
+        if (intro)
+        {
+            StartCoroutine(SpiritCutscene());
+        }
+
+        resistance = 1f / Time.deltaTime;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {   
+        if (rb != null)
+        {
+            if (!intro)
+            {
+                if (!endTriggered)
+                {
+                    dirX = Input.GetAxis("Horizontal");
+                    dirY = Input.GetAxis("Vertical");
+
+                    rb.velocity = new Vector3(dirX * speed, dirY * speed, rb.velocity.z);
+
+                    if (renderer.enabled)
+                    {
+                        if (dirX > 0.1f || dirX < -0.1f || dirY > 0.1f || dirY < -0.1f)
+                        {
+                            mermaidAnim.SetBool("swimming", true);
+                        }
+                        else
+                        {
+                            mermaidAnim.SetBool("swimming", false);
+                        }
+                    }
+
+                    DirectionCheck();
+
+                    // LIGHT MECHANICS
+                    if (Input.GetKeyDown("e"))
+                    {
+                        if (spiritFound == true && illuminateCooldown == false)
+                        {
+                            StartCoroutine(Illuminate());
+                        }
+                    }
+
+                    if (Input.GetKeyDown("tab"))
+                    {
+                        journal.JournalActivation();
+
+                        // FROZEN OUT PAUSE FEATURE
+                        /*if (pause.isPaused == false)
+                        {
+                            journal.JournalActivation();
+                        }*/
+                    }
+
+                    // TESTING ONLY
+                    if (Input.GetKeyDown("backspace"))
+                    {
+                        Screenshot();
+                    }
+
+                    // TESTING ONLY
+                    if (testSpawn.gameObject.activeSelf)
+                    {
+                        if (Input.GetKeyDown("1"))
+                        {
+                            transform.position = new Vector3(testSpawn.position.x, testSpawn.position.y, transform.position.z);
+                        }
+                    }
+
+                    // MANDATORY CAMERA BOUNDARIES
+                    if (transform.position.x <= levelSetup.leftLimit)
+                    {
+                        leftReached = true;
+                    }
+                    else
+                    {
+                        leftReached = false;
+                    }
+                    if (transform.position.x >= levelSetup.rightLimit)
+                    {
+                        rightReached = true;
+                    }
+                    else
+                    {
+                        rightReached = false;
+                    }
+                    if (transform.position.y >= levelSetup.upLimit)
+                    {
+                        upReached = true;
+                    }
+                    else
+                    {
+                        upReached = false;
+                    }
+                    if (transform.position.y <= levelSetup.downLimit)
+                    {
+                        downReached = true;
+                    }
+                    else
+                    {
+                        downReached = false;
+                    }
+
+                    // REPLACE THIS WITH IF STATEMENT BELOW IF TESTING
+                    CameraCheck();
+
+                    //TESTING ONLY
+                    /*if (levelSetup.cameraBoundaries == true)
+                    {
+                        CameraCheck();
+                    }
+                    else
+                    {
+                        camera.transform.position = new Vector3(transform.position.x, transform.position.y, camera.transform.position.z);
+                    }*/
+
+                    // OPTIONAL CHARACTER BOUNDARIES
+                    if (levelSetup.boundaries == true)
+                    {
+                        if (transform.position.y >= topBound.position.y)
+                        {
+                            if (direction != "bottom")
+                            {
+                                rb.AddForce(-transform.up * resistance);
+                            }
+                            else
+                            {
+                                rb.AddForce(transform.up * resistance);
+                            }
+                        }
+
+                        if (transform.position.x <= leftBound.position.x)
+                        {
+                            if (direction != "right")
+                            {
+                                rb.AddForce(-transform.up * resistance);
+                            }
+                            else
+                            {
+                                rb.AddForce(transform.up * resistance);
+                            }
+                        }
+
+                        if (transform.position.y <= bottomBound.position.y)
+                        {
+                            if (direction != "top")
+                            {
+                                rb.AddForce(-transform.up * resistance);
+                            }
+                            else
+                            {
+                                rb.AddForce(transform.up * resistance);
+                            }
+                        }
+
+                        if (transform.position.x >= rightBound.position.x)
+                        {
+                            if (direction != "left")
+                            {
+                                rb.AddForce(-transform.up * resistance);
+                            }
+                            else
+                            {
+                                rb.AddForce(transform.up * resistance);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    rb.velocity = new Vector3(0.2f, 0.2f, 0f);
+                    transform.position = Vector3.MoveTowards(transform.position, endLevel.position, speed * Time.deltaTime);
+                    StartCoroutine(NextLevel());
+                }
+            }
+
+            //TESTING
+            if (Input.GetKeyDown("right ctrl"))
+            {
+                Screenshot();
+            }
+        }
+    }
+
+    void DirectionCheck()
+    {
+        if (dirX == 0f && dirY > 0f)
+        {
+            direction = "top";
+            DrawLineUp(direction);
+        }
+
+        if (dirX > 0f && dirY > 0f)
+        {
+            direction = "topRight";
+            DrawLineUp(direction);
+        }
+
+        if (dirX > 0f && dirY == 0f)
+        {
+            direction = "right";
+            AnimationCheck(direction);
+        }
+
+        if (dirX > 0f && dirY < 0f)
+        {
+            direction = "bottomRight";
+            DrawLineDown(direction);
+        }
+
+        if (dirX == 0f && dirY < 0f)
+        {
+            direction = "bottom";
+            DrawLineDown(direction);
+        }
+
+        if (dirX < 0f && dirY < 0f)
+        {
+            direction = "bottomLeft";
+            DrawLineDown(direction);
+        }
+
+        if (dirX < 0f && dirY == 0f)
+        {
+            direction = "left";
+            AnimationCheck(direction);
+        }
+
+        if (dirX < 0f && dirY > 0f)
+        {
+            direction = "topLeft";
+            DrawLineUp(direction);
+        }
+    }
+
+    // up/left, up/right, down/left, down/right, up, right, down, left
+    private void CameraCheck()
+    {
+        if (upReached == true && leftReached == true)
+        {
+            camera.transform.position = new Vector3(camera.transform.position.x, camera.transform.position.y, camera.transform.position.z);
+        }
+        else if (upReached == true && rightReached == true)
+        {
+            camera.transform.position = new Vector3(camera.transform.position.x, camera.transform.position.y, camera.transform.position.z);
+        }
+        else if (downReached == true && leftReached == true)
+        {
+            camera.transform.position = new Vector3(camera.transform.position.x, camera.transform.position.y, camera.transform.position.z);
+        }
+        else if (downReached == true && rightReached == true)
+        {
+            camera.transform.position = new Vector3(camera.transform.position.x, camera.transform.position.y, camera.transform.position.z);
+        }
+        else if (upReached == true || downReached == true)
+        {
+            camera.transform.position = new Vector3(transform.position.x, camera.transform.position.y, camera.transform.position.z);
+        }
+        else if (leftReached == true || rightReached == true)
+        {
+            camera.transform.position = new Vector3(camera.transform.position.x, transform.position.y, camera.transform.position.z);
+        }
+        else
+        {
+            camera.transform.position = new Vector3(transform.position.x, transform.position.y, camera.transform.position.z);
+        }
+    }
+
+    void DrawLineUp(string direction)
+    {
+        float maxRaycast = 0.6f;
+        Vector3 startPosition = transform.position;
+        Vector3 endPosition = new Vector3(transform.position.x, transform.position.y + maxRaycast);
+
+        RaycastHit Hit;
+        float lineWidth = 0.1f;
+
+        lineRenderer.startWidth = lineWidth;
+        lineRenderer.endWidth = lineWidth;
+
+        lineRenderer.SetPosition(0, startPosition);
+        lineRenderer.SetPosition(1, endPosition);
+
+        if (!Physics.Raycast(transform.position, Vector3.up, out Hit, maxRaycast))
+        {
+            AnimationCheck(direction);
+        }
+    }
+
+    void DrawLineDown(string direction)
+    {
+        float maxRaycast = 0.6f;
+        Vector3 startPosition = transform.position;
+        Vector3 endPosition = new Vector3(transform.position.x, transform.position.y - maxRaycast);
+
+        RaycastHit Hit;
+        float lineWidth = 0.1f;
+
+        lineRenderer.startWidth = lineWidth;
+        lineRenderer.endWidth = lineWidth;
+
+        lineRenderer.SetPosition(0, startPosition);
+        lineRenderer.SetPosition(1, endPosition);
+
+        if (!Physics.Raycast(transform.position, Vector3.down, out Hit, maxRaycast))
+        {
+            AnimationCheck(direction);
+        }
+    }
+
+    void AnimationCheck(string direction)
+    {
+        switch (direction)
+        {
+            case "top":
+                transform.eulerAngles = new Vector3(0f, 0f, 0f);
+                break;
+            case "topRight":
+                transform.eulerAngles = new Vector3(0f, 0f, -45f);
+                renderer.flipX = true;
+                break;
+            case "right":
+                transform.eulerAngles = new Vector3(0f, 0f, -90f);
+                renderer.flipX = true;
+                break;
+            case "bottomRight":
+                transform.eulerAngles = new Vector3(0f, 0f, -135f);
+                renderer.flipX = true;
+                break;
+            case "bottom":
+                transform.eulerAngles = new Vector3(0f, 0f, -180f);
+                break;
+            case "bottomLeft":
+                transform.eulerAngles = new Vector3(0f, 0f, -225f);
+                renderer.flipX = false;
+                break;
+            case "left":
+                transform.eulerAngles = new Vector3(0f, 0f, -270f);
+                renderer.flipX = false;
+                break;
+            case "topLeft":
+                transform.eulerAngles = new Vector3(0f, 0f, -315f);
+                renderer.flipX = false;
+                break;
+        }
+
+        camera.transform.eulerAngles = new Vector3(0f, 0f, 0f);
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.tag == ("Volcano"))
+        {
+            if (!respawning)
+            {
+                StartCoroutine(Respawn());
+            }
+        }
+    }
+    
+    void OnTriggerEnter(Collider collider)
+    {
+        if (collider.gameObject.tag == ("Info"))
+        {
+            StartCoroutine(InfoTriggered());
+            Destroy(collider.gameObject);
+        }
+
+        if (collider.gameObject.tag == ("Spirit"))
+        {
+            StartCoroutine(CollectSpirit(collider.gameObject));
+
+            if (levelSetup.firstLevel)
+            {
+                StartCoroutine(IlluminateTutorial());
+            }
+        }
+
+        if (collider.gameObject.tag == ("Contaminated") || collider.gameObject.tag == ("Angular Fish") || collider.gameObject.tag == ("Jellyfish"))
+        {
+            if (!respawning)
+            {
+                StartCoroutine(Respawn());
+            }
+        }
+
+        if (collider.gameObject.tag == ("Checkpoint"))
+        {
+            spawnLocation.position = new Vector3(collider.gameObject.transform.position.x, collider.gameObject.transform.position.y, transform.position.z);
+            Destroy(collider.gameObject);
+            StartCoroutine(Checkpoint());
+        }
+
+        if (collider.gameObject.name == ("End Trigger"))
+        {
+            EndLevel();
+        }
+    }
+
+    IEnumerator Illuminate()
+    {
+        illuminateSFX.Play();
+        illuminateCooldown = true;
+        spotLight.range = maxLightRange;
+        spotLight.intensity = maxLightIntensity;
+        yield return new WaitForSeconds(illuminateDelay);
+        if (spotLight.range > normalLightRange || spotLight.intensity > normalLightIntensity)
+        {
+            spotLight.range = normalLightRange;
+            spotLight.intensity = normalLightIntensity;
+        }
+        illuminateCooldown = false;
+    }
+    
+    // PUBLIC FOR TESTING ONLY
+    public IEnumerator Respawn()
+    {
+        respawning = true;
+        renderer.enabled = false;
+        bubbles.SetActive(false);
+        rb.constraints = RigidbodyConstraints.FreezeAll;
+        yield return new WaitForSeconds(0.1f);
+        fadeAnim.SetBool("spawning", false);
+        yield return new WaitForSeconds(2f);
+        splashSFX.Play();
+        fadeAnim.SetBool("spawning", true);
+        gameObject.transform.position = spawnLocation.position;
+        renderer.enabled = true;
+        bubbles.SetActive(true);
+        direction = "right";
+        AnimationCheck(direction);
+        camera.transform.position = new Vector3(transform.position.x, transform.position.y, camera.transform.position.z);
+        transform.eulerAngles = new Vector3(0f, 0f, -90f);
+        camera.transform.eulerAngles = new Vector3(0f, 0f, 0f);
+        yield return new WaitForSeconds(1f);
+        respawning = false;
+        rb.constraints = RigidbodyConstraints.None;
+        rb.constraints = RigidbodyConstraints.FreezeRotation;
+    }
+
+    IEnumerator CollectSpirit(GameObject spirit)
+    {
+        pickupSFX.Play();
+        spiritFound = true;
+        spiritUI.SetActive(true);
+        AnimationCheck(direction);
+        mermaidAnim.SetBool("spirit", true);
+        yield return new WaitForSeconds(0.3f);
+        Destroy(spirit);
+        yield return new WaitForSeconds(0.7f);
+        mermaidAnim.SetBool("spirit", false);
+    }
+
+    private void EndLevel()
+    {
+        if (!spiritFound)
+        {
+            if (!respawning)
+            {
+                StartCoroutine(Respawn());
+            }
+
+            StartCoroutine(SpiritsRequired());
+        }
+        else
+        {
+            endTriggered = true;
+            direction = "topRight";
+            AnimationCheck(direction);
+        }
+    }
+
+    IEnumerator NextLevel()
+    {
+        if (levelSetup.finalLevel)
+        {
+            yield return new WaitForSeconds(4f);
+            TBC.SetActive(true);
+            yield return new WaitForSeconds(3f);
+            SceneManager.LoadScene(0);
+        }
+        else
+        {
+            yield return new WaitForSeconds(4f);
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+        }
+    }
+
+    IEnumerator IlluminateTutorial()
+    {
+        if (checkpointText.activeSelf)
+        {
+            checkpointText.SetActive(false);
+        }
+
+        illuminateText.SetActive(true);
+        yield return new WaitForSeconds(5f);
+        illuminateText.SetActive(false);
+    }
+
+    IEnumerator SpiritsRequired()
+    {
+        yield return new WaitForSeconds(2.5f);
+        spiritText.SetActive(true);
+        yield return new WaitForSeconds(5f);
+        spiritText.SetActive(false);
+    }
+
+    IEnumerator SpiritCutscene()
+    {
+        camera.transform.position = new Vector3(introSpirit.position.x, introSpirit.position.y, camera.transform.position.z);
+        introText.SetActive(true);
+        yield return new WaitForSeconds(5f);
+        introText.SetActive(false);
+        intro = false;
+        camera.transform.position = new Vector3(transform.position.x, transform.position.y, camera.transform.position.z);
+    }
+
+    IEnumerator Checkpoint()
+    {
+        if (illuminateText.activeSelf)
+        {
+            illuminateText.SetActive(false);
+        }
+        
+        checkpointText.SetActive(true);
+        yield return new WaitForSeconds(3f);
+        checkpointText.SetActive(false);
+    }
+
+    IEnumerator InfoTriggered()
+    {   
+        if (levelSetup.firstLevel)
+        {
+            if (journalHelpDone == false)
+            {
+                journalText.SetActive(true);
+            }
+        }
+        
+        journal.unlockable[journal.state] = true;
+        journal.state++;
+        infoLogoAnim.SetBool("infoTriggered", true);
+        scribble.Play();
+        yield return new WaitForSeconds(3f);
+        infoLogoAnim.SetBool("infoTriggered", false);
+
+        if (levelSetup.firstLevel)
+        {
+            if (journalHelpDone == false)
+            {
+                journalText.SetActive(false);
+                journalHelpDone = true;
+            }
+        }
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+VOLCANO
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+[RequireComponent(typeof(AudioSource))]
+public class Volcano : MonoBehaviour
+{
+    [Header("Images")]
+    [SerializeField] private MeshRenderer mesh;
+    [SerializeField] private Material normal;
+    [SerializeField] private Material burning;
+
+    [Header("Particle System")]
+    [SerializeField] private ParticleSystem particle;
+
+    [Header("SFX")]
+    [SerializeField] private AudioClip SFXClip;
+
+    private BoxCollider boxCollider;
+
+    private float activeTime = 3f;
+    private float imageDelay = 2f;
+    private float imageSwitch = 0.5f;
+    private float deactiveTime = 1f;
+    
+    void Awake()
+    {
+        boxCollider = particle.GetComponent<BoxCollider>();
+    }
+    
+    void Start()
+    {
+        StartCoroutine(UnderWaterVolcano());
+    }
+
+    IEnumerator UnderWaterVolcano()
+    {
+        mesh.material = burning;
+        particle.Play();
+        AudioSource.PlayClipAtPoint(SFXClip, new Vector3(transform.position.x, transform.position.y, -7f));
+        boxCollider.isTrigger = false;
+        yield return new WaitForSeconds(activeTime);
+        particle.Stop();
+        mesh.material = normal;
+        boxCollider.isTrigger = true;
+        yield return new WaitForSeconds(imageDelay);
+        mesh.material = burning;
+        yield return new WaitForSeconds(imageSwitch);
+        mesh.material = normal;
+        yield return new WaitForSeconds(deactiveTime);
+        StartCoroutine(UnderWaterVolcano());
+    }
+}

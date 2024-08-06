@@ -1,0 +1,234 @@
+MANAGER
+
+extends RigidBody2D
+
+var filePath = "user://data.save"
+
+var box
+var scoreText
+var highScoreText
+var chargeBar
+var helpText
+var catCollision
+var windArrow
+var windText
+
+var score = 0
+var highScore   
+
+var catPosition = Vector2(55, 323)
+var minBoxPosition = 160
+var maxBoxPosition = 1110
+var boxPosition
+
+# min 84, max 800
+var forceXDefault = 84
+var forceXMax = 850
+var forceX = 84
+var forceYDefault = -500
+var forceY = -500
+var force = Vector2(90, forceY)
+
+var chargeRate = 4
+
+var windRate
+var windMin = 0
+var windMax = 4
+var windAdv = [800, 1000]
+
+var spaceHeld = false
+var midJump = false
+var forward = true
+
+var reset_state = false
+
+var pingSFX
+var meowSFX
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	_loadScore()
+	box = $"../Box"
+	scoreText = $"../Score"
+	highScoreText = $"../HighScore"
+	chargeBar = $"../ChargeBar"
+	helpText = $"../HelpText"
+	catCollision = $CatCollisionShape2D
+	windArrow = $"../WindArrow"
+	windText = $"../WindText"
+	scoreText.text = "Score: " + str(score)
+	highScoreText.text = "High Score: " + str(highScore)
+	pingSFX = $"../PingSFX"
+	meowSFX = $"../meowSFX"
+	_moveBox()
+	_windSetup()
+	
+func _process(_delta):
+	if (spaceHeld == true):
+		if (forward == true):
+			forceX += chargeRate
+			chargeBar.value = forceX
+		elif (forward == false):
+			forceX -= chargeRate
+			chargeBar.value = forceX
+	if (forceX >= forceXMax):
+		forceX = forceXMax
+		forward = false
+	elif (forceX <= forceXDefault):
+		forceX = forceXDefault
+		forward = true
+	
+func _input(event):
+	if (event.is_action_pressed("Space")):
+		if (midJump == false):
+			helpText.visible = false
+			spaceHeld = true
+	if (event.is_action_released("Space")):
+		spaceHeld = false
+		_jump()
+	if (event.is_action_pressed("Clear Score")):
+		_newScore()
+
+func _moveBox():
+	boxPosition = randf_range(minBoxPosition, maxBoxPosition)
+	box.position.x = boxPosition
+
+func _resetState():
+	set_deferred("freeze", true)
+	self.sleeping = true
+	self.position = catPosition
+	_move_body(catPosition)
+	catCollision.set_deferred("disabled", false)
+	midJump = false
+	forward = true
+	helpText.visible = true
+	forceX = forceXDefault
+	forceY = forceYDefault
+	scoreText.text = "Score: " + str(score)
+	chargeBar.value = 90
+	if (score > highScore):
+		highScore = score
+		highScoreText.text = "High Score: " + str(highScore)
+		_saveScore()
+	_moveBox()
+	_windSetup()
+	
+func _jump():
+	if forceX > 84:
+		if midJump == false:
+			self.freeze = false
+			self.sleeping = false
+			midJump = true
+			_windApply()
+			force = Vector2(forceX, forceY)
+			self.apply_impulse(force)
+			
+func _windSetup():
+	if (boxPosition > windAdv[0]):
+		windRate = randi_range(windMin, windMax - 2)
+	elif (boxPosition > windAdv[1]):
+		windRate = randi_range(windMin, windMax - 1)
+	else:
+		windRate = randi_range(windMin, windMax)
+	print_debug(boxPosition)
+		
+	match(windRate):
+		0:
+			windText.text = str(1) + " MPH"
+			windArrow.visible = true
+			windArrow.flip_h = false
+		1:
+			windText.text = str(2) + " MPH"
+			windArrow.visible = true
+			windArrow.flip_h = false
+		2:
+			windText.text = str(0) + " MPH"
+			windArrow.visible = false
+		3:
+			windText.text = str(1) + " MPH"
+			windArrow.visible = true
+			windArrow.flip_h = true
+		4:
+			windText.text = str(2) + " MPH"
+			windArrow.visible = true
+			windArrow.flip_h = true
+			
+func _windApply():
+	match(windRate):
+		0:
+			forceX *= 1.3
+		1:
+			forceX *= 1.15
+		2:
+			pass
+		3:
+			forceX *= 0.85
+		4:
+			forceX *= 0.7
+	
+func _boxReached():
+	score += 1
+	pingSFX.play()
+	_resetState()
+
+func _on_box_area_2d_body_entered(_body):
+	catCollision.set_deferred("disabled", true)
+	_boxReached()
+
+func _on_ground_area_2d_body_entered(_body):
+	score = 0
+	meowSFX.play()
+	_resetState()
+	
+func _move_body(targetPos: Vector2):
+	catPosition = targetPos;
+	reset_state = true;
+
+func _integrate_forces(state):
+	if reset_state:
+		state.transform = Transform2D(0.0, catPosition)
+		reset_state = false
+		
+func _saveScore():
+	var file = FileAccess.open(filePath, FileAccess.WRITE)
+	file.store_var(highScore)
+	file.close()
+	file = null
+	
+func _loadScore():
+	if FileAccess.file_exists(filePath):
+		var file = FileAccess.open(filePath, FileAccess.READ)
+		highScore = file.get_var(0)
+		file.close()
+		file = null
+	else:
+		highScore = 0
+		
+func _newScore():
+	if FileAccess.file_exists(filePath):
+		DirAccess.remove_absolute(filePath)
+	highScore = 0
+	highScoreText.text = "High Score: " + str(highScore)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+MUSIC
+
+extends AudioStreamPlayer2D
+
+var music
+var musicPlayed = true
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	music = self
+	
+func _input(event):
+	if (event.is_action_pressed("Toggle Music")):
+		_toggleMusic()
+
+func _toggleMusic():
+	if (musicPlayed == true):
+		music.stop()
+		musicPlayed = false
+	else:
+		music.play()
+		musicPlayed = true

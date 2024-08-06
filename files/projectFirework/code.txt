@@ -1,0 +1,510 @@
+FIREWORK SCRIPT
+
+using System.Collections;
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class FireworkScript : MonoBehaviour
+{
+    // references
+    [SerializeField] private GameObject firework;
+    [SerializeField] private GameObject spawner;
+    [SerializeField] private GameObject boom;
+    [SerializeField] private Camera cam;
+
+    // timer references
+    [SerializeField] private GameObject timerImage;
+    private float currentTimer;
+    private float maxTimer = 13f;
+
+    // rb references
+    [SerializeField] private Rigidbody2D rb;
+    [SerializeField] private Rigidbody2D spawnRB;
+    
+    [SerializeField] private GameObject startPosition;
+    
+    // powerup references
+    [SerializeField] private GameObject[] powerups;
+    [SerializeField] private Transform[] powerupSpawns;
+    private int randomPower = 0;
+    private int randomSpawn = 0;
+    private float targetDistance = -2f;
+
+    // list references
+    private List<GameObject> powerupsSpawned = new List<GameObject>();
+    [SerializeField] List<Color> coloursCollected = new List<Color>();
+
+    // text references
+    [SerializeField] private GameObject startText;
+    [SerializeField] private TMP_Text scoreText;
+    [SerializeField] private TMP_Text bestScoreText;
+    [SerializeField] private TMP_Text attemptText;
+
+    // music references
+    [SerializeField] private AudioSource beat;
+    [SerializeField] private AudioSource pickupSFX;
+    [SerializeField] private AudioSource explosionSFX;
+    private float explosionPitch = 1f;
+
+    // score & attempts references
+    private float score = 0;
+    private float bestScore = 0;
+    private int attempts = 0;
+    private int multiplierCount = 0;
+    
+    private int explosionCount = 0;
+
+    // tail references
+    [SerializeField] private GameObject[] tails;
+    private int tailNum = 0;
+
+    private int randomColour;
+
+    private bool fired = false;
+
+    // movement references
+    public float moveSpeed = 7f;
+    private float flightSpeed = 7f;
+    private float dirX = 0;
+
+    // size references
+    private float boomScale = 1f;
+    private float fireworkScale = 1f;
+
+    // sets resolution
+    void Awake()
+    {
+        Screen.SetResolution(480, 800, false);
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    // deactivates mouse & firework, empties scoreText, sets time to currentTimer
+    void Start()
+    {
+        firework.SetActive(false);
+        scoreText.text = "";
+        currentTimer = maxTimer;
+    }
+
+    // camera movement, input tracking, starting timer, tail, speed decrease, spawn powerup coroutines, starts music, wrap around movement
+    void Update()
+    {
+        if (firework != null)
+        {
+            cam.transform.position = new Vector3(cam.transform.position.x, firework.transform.position.y + 3.5f, cam.transform.position.z);
+
+            if (fired == false)
+            {
+                if (Input.GetKeyDown("joystick button 1") || Input.GetKeyDown("space")) 
+                {
+                    firework.SetActive(true);
+                    startText.SetActive(false);
+                    StartCoroutine(Timer());
+                    StartCoroutine(Tail());
+                    StartCoroutine(SpeedDecrease());
+                    beat.Play();
+                    fired = true;
+                }
+            }
+            
+            //spawn powerup after a certain distance which constantly increases
+            if (firework.transform.position.y >= targetDistance)
+            {
+                if (firework.activeSelf)
+                {
+                    targetDistance += 3;
+                    SpawnPowerup();
+                }
+            }
+
+            //wrap around movement
+            if (firework.transform.position.x > 3.12f)
+            {
+                firework.transform.position = new Vector3(-3.12f, firework.transform.position.y, firework.transform.position.z);
+            }
+
+            if (firework.transform.position.x < -3.12f)
+            {
+                firework.transform.position = new Vector3(3.12f, firework.transform.position.y, firework.transform.position.z);
+            }
+        }
+    }
+
+    // firework & spawner movement
+    void FixedUpdate()
+    {
+        if (firework != null)
+        {
+            if (fired == true)
+            {
+                rb.velocity = new Vector2(rb.velocity.x, flightSpeed);
+                spawnRB.velocity = new Vector2(spawnRB.velocity.x, flightSpeed);
+                dirX = Input.GetAxis("Horizontal");
+            }
+        }
+        // movement updates
+        if (rb != null)
+        {
+            if (rb.bodyType != RigidbodyType2D.Static)
+            {
+                if (transform.position.x < 2.8f || transform.position.x > -2.8f)
+                {
+                    rb.velocity = new Vector2(dirX * moveSpeed, rb.velocity.y);
+                }
+                else
+                {
+                    firework.transform.position = new Vector2(firework.transform.position.x, firework.transform.position.y);
+                }
+            }
+        }
+    }
+
+    // spawn rng, spawns powerup
+    private void SpawnPowerup()
+    {
+        randomPower = Random.Range(0, powerups.Length);
+        randomSpawn = Random.Range(0, powerupSpawns.Length);
+        powerupsSpawned.Add(Instantiate(powerups[randomPower], powerupSpawns[randomSpawn].transform.position, powerupSpawns[randomSpawn].transform.rotation));
+    }
+
+    // increases movement speed, pickup sfx, called from star
+    public void SpeedIncrease()
+    {
+        flightSpeed++;
+        moveSpeed++;
+        pickupSFX.Play();
+    }
+
+    // randomises colour, collects each within a list, pickup sfx, called from ball
+    public void ColourChange()
+    {
+        pickupSFX.Play();
+        randomColour = Random.Range(0, 5);
+
+        if (randomColour == 0)
+        {
+            //white
+            firework.GetComponent<SpriteRenderer>().color = new Color(255, 255, 255, 255);
+            coloursCollected.Add(new Vector4(255, 255, 255, 255));
+        }
+        else if (randomColour == 1)
+        {
+            //yellow
+            firework.GetComponent<SpriteRenderer>().color = new Color(255, 255, 0, 255);
+            coloursCollected.Add(new Vector4(255, 255, 0, 255));
+        }
+        else if (randomColour == 2)
+        {
+            //blue
+            firework.GetComponent<SpriteRenderer>().color = new Color(0, 0, 255, 255);
+            coloursCollected.Add(new Vector4(0, 0, 255, 255));
+        }
+        else if (randomColour == 3)
+        {
+            //green
+            firework.GetComponent<SpriteRenderer>().color = new Color(0, 255, 0, 255);
+            coloursCollected.Add(new Vector4(0, 255, 0, 255));
+        }
+        else if (randomColour == 4)
+        {
+            //purple
+            firework.GetComponent<SpriteRenderer>().color = new Color(160, 0, 255, 255);
+            coloursCollected.Add(new Vector4(160, 0, 255, 255));
+        }
+    }
+
+    // increases size of firework & explosion, pickup sfx, called from triangle
+    public void BoomSizeIncrease()
+    {
+        boomScale += 0.25f;
+        fireworkScale += 0.25f;
+        firework.transform.localScale = new Vector3(fireworkScale, fireworkScale, 1);
+        boom.transform.localScale = new Vector3(boomScale, boomScale, 1);
+        pickupSFX.Play();
+    }
+
+    // 13 second timer, scales timer fuse, sets explosionCount & calls explosion at the end
+    IEnumerator Timer()
+    {
+        if (currentTimer == 0)
+        {
+            explosionCount = coloursCollected.Count - 1;
+            StartCoroutine(Explosion());
+        }
+        else
+        {
+            currentTimer--;
+            timerImage.transform.localScale = new Vector3(currentTimer / maxTimer, timerImage.transform.localScale.y, timerImage.transform.localScale.z);
+            yield return new WaitForSeconds(1f);
+            StartCoroutine(Timer());
+        }
+    }
+
+    // firework fuse runs down
+    IEnumerator Tail()
+    {
+        yield return new WaitForSeconds(1f);
+        tails[tailNum].SetActive(false);
+        if (tailNum != 12)
+        {
+            tailNum++;
+            StartCoroutine(Tail());
+        }
+    }
+
+    // slows down firework every 2.5 seconds
+    IEnumerator SpeedDecrease()
+    {
+        yield return new WaitForSeconds(2.5f);
+        
+        if (flightSpeed > 1 && moveSpeed > 1f)
+        {
+            flightSpeed--;
+            moveSpeed --;
+        }
+          
+        if (firework.activeSelf)
+        {
+            StartCoroutine(SpeedDecrease());
+        }
+    }
+
+    // Handles multi explosions, removes existing pickups, scoring, resets variables, explosion sfx, increments attempts, resets firework ready to fire again
+    IEnumerator Explosion()
+    {
+        boom.transform.localScale = new Vector3(boomScale, boomScale, 1);
+        boom.GetComponent<SpriteRenderer>().color = new Color(coloursCollected[explosionCount].r, coloursCollected[explosionCount].g, coloursCollected[explosionCount].b, coloursCollected[explosionCount].a);
+
+        for (int i = powerupsSpawned.Count - 1; i >= 0; i--)
+        {
+            GameObject obj = powerupsSpawned[i];
+
+            Destroy(obj);
+            powerupsSpawned.RemoveAt(i);
+        }
+
+        GameObject boomCopy = Instantiate(boom, firework.transform.position, firework.transform.rotation);
+        firework.SetActive(false);
+        score += spawner.transform.position.y;
+        score = Mathf.FloorToInt(score);
+        scoreText.color = new Color(160, 0, 255, 255);
+
+        if (multiplierCount > 0)
+        {
+            scoreText.text = score.ToString() + "(" + (multiplierCount + 1) + "x)";
+        }
+        else
+        {
+            scoreText.text = score.ToString();
+        }
+
+        explosionPitch += 0.02f;
+        explosionSFX.pitch = explosionPitch;
+        explosionSFX.Play();
+        explosionCount--;
+        multiplierCount++;
+        yield return new WaitForSeconds(1.5f);
+
+        if (explosionCount < 0)
+        {
+            boomScale = Mathf.FloorToInt(boomScale);
+            score = score * boomScale;
+            score = Mathf.FloorToInt(score);
+            scoreText.color = new Color(0, 255, 0, 255);
+            scoreText.text = score.ToString() + "(" + boomScale + "x)";
+            randomColour = 0;
+            boomScale = 1f;
+            fireworkScale = 1f;
+            boom.transform.localScale = new Vector3(boomScale, boomScale, 1);
+            firework.transform.localScale = new Vector3(fireworkScale, fireworkScale, 1);
+            firework.GetComponent<SpriteRenderer>().color = new Color(255, 255, 255, 255);
+            boom.GetComponent<SpriteRenderer>().color = new Color(255, 255, 255, 255);
+            yield return new WaitForSeconds(1f);
+            firework.transform.position = new Vector3(0f, -3.27f, 1f);
+            spawnRB.velocity = new Vector2(spawnRB.velocity.x, 0);
+            spawner.transform.position = new Vector3(0f, 0f, 0f);
+            targetDistance = -2f;
+            fired = false;
+            flightSpeed = 7f;
+            moveSpeed = 7f;
+            multiplierCount = 0;
+            scoreText.text = "";
+            currentTimer = maxTimer;
+            explosionPitch = 1f;
+            attempts++;
+            attemptText.text = "Attempts: " + attempts.ToString();
+            timerImage.transform.localScale = new Vector3(currentTimer / maxTimer, timerImage.transform.localScale.y, timerImage.transform.localScale.z);
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestScoreText.text = "Best Score: " + bestScore.ToString();
+            }
+
+            score = 0;
+            startText.SetActive(true);
+
+            for (int i = 0; i < tails.Length; i++)
+            {
+                tails[i].SetActive(true);
+            }
+
+            tailNum = 0;
+
+            for (int i = coloursCollected.Count - 1; i >=1; i--)
+            {
+                coloursCollected.RemoveAt(i);
+            }
+        }
+        else
+        {
+            boomScale += 0.1f;
+            StartCoroutine(Explosion());
+        }
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+UFO SCRIPT
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class UFOScript : MonoBehaviour
+{
+    private FireworkScript fireworkScript;
+    private GameObject manager;
+
+    private bool move = false;
+    
+    private void Start()
+    {
+        manager = GameObject.FindWithTag("Manager");
+        fireworkScript = manager.GetComponent<FireworkScript>();
+    }
+
+    private void Update()
+    {
+        if (move == true)
+        {
+            transform.Translate(-Vector3.right * fireworkScript.moveSpeed * Time.deltaTime);
+            transform.Translate(Vector3.up * fireworkScript.moveSpeed * Time.deltaTime);
+
+            if (transform.position.x <= -10f)
+            {
+                Destroy(gameObject);
+            }
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "Player")
+        {
+            move = true;
+        }
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+PICKUP SCRIPT
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class PickupScript : MonoBehaviour
+{
+    // references
+    protected GameObject manager;
+    protected GameObject firework;
+    protected FireworkScript fireworkScript;
+
+    // sets references
+    protected void Start()
+    {
+        manager = GameObject.FindWithTag("Manager");
+        firework = GameObject.FindWithTag("Player");
+        fireworkScript = manager.GetComponent<FireworkScript>();
+    }
+
+    // destroys when below firework by 2 units
+    protected void Update()
+    {
+        if (firework != null)
+        {
+            if (transform.position.y <= firework.transform.position.y - 2f)
+            {
+                Destroy(gameObject);
+            }
+        }
+    }
+
+    // collision constructor template
+    protected virtual void OnTriggerEnter2D(Collider2D collider)
+    {
+        if (collider.gameObject.tag == "Player")
+        {
+            Debug.Log("<color=red>PICKUP CONSTRUCTOR CALLED!</color>");
+        }
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BALL SCRIPT
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class BallScript : PickupScript
+{
+    // calls colour change in firework script, destroys
+    protected override void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "Player")
+        {
+            fireworkScript.ColourChange();
+            Destroy(gameObject);
+        }
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+STAR SCRIPT
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class StarScript : PickupScript
+{
+    // calls speed increase in firework script, destroys
+    protected override void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "Player")
+        {
+            fireworkScript.SpeedIncrease();
+            Destroy(gameObject);
+        }
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+TRIANGLE SCRIPT
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class TriangleScript : PickupScript
+{
+    // calls boom size increase in firework script, destroys
+    protected override void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "Player")
+        {
+            fireworkScript.BoomSizeIncrease();
+            Destroy(gameObject);
+        }
+    }
+}
