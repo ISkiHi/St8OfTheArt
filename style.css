@@ -57,6 +57,12 @@ a {
   transition: color 0.5s ease;
 }
 
+a.inlineLink {
+  display: inline;
+  color: lightblue;
+  transition: color 0.5s ease;
+}
+
 p, a {
     font-size: 20px;
     text-align: center;
@@ -66,12 +72,20 @@ a:hover {
   color: blue;
 }
 
-video, iframe.youtube {
+video {
   display: block;
   margin: 0 auto;
+  padding-bottom: 5px;
+}
+
+video, iframe.youtubeLandscape {
   width: 720px;
   height: 480px;
-  padding-bottom: 5px;
+}
+
+video, iframe.youtubeVertical {
+  width: 480px;
+  height: 720px;
 }
 
 iframe {
@@ -94,17 +108,10 @@ img.trello4 {
     width: 500px;
 }
 
-img.matildaImage {
-    display: block;
-    margin: 0 auto;
-    height: 300px;
-    width: 500px;
-}
-
-img.fireworkImage {
+img.verticalImage {
     display: block;
     height: 500px;
-    width: 350px;
+    width: 300px;
 }
 
 img {
